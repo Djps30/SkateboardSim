@@ -19,6 +19,9 @@ ASkateCore::ASkateCore()
 	StaticMesh->SetSimulatePhysics(true);
 	RootComponent = StaticMesh;
 
+	RiderMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Rider"));
+	RiderMesh->SetupAttachment(StaticMesh);
+
 	FrontalWheels = CreateDefaultSubobject<USceneComponent>(TEXT("FrontWheels"));
 	FrontalWheels->SetRelativeLocation(FVector(150.0f,0.0f,10.0f));
 	FrontalWheels->SetupAttachment(StaticMesh);
@@ -51,6 +54,7 @@ ASkateCore::ASkateCore()
 
 	PrevPosDelta.SetNum(WheelPoints.Num());
 	bWheelGround.SetNum(WheelPoints.Num());
+	WheelForceInterp.SetNum(WheelPoints.Num());
 
 
 }
@@ -65,12 +69,23 @@ void ASkateCore::BeginPlay()
 
 	Mass = 0.85f * StaticMesh->BodyInstance.GetBodyMass();
 
+	AccumulatedTime = 0.f;
+
+	FixedDeltaTime = 1.0f / 60.f;
+
 }
 
 // Called every frame
 void ASkateCore::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	AccumulatedTime += DeltaTime;
+	while (AccumulatedTime >= FixedDeltaTime)
+	{
+		UpdateFixedDelta(FixedDeltaTime);
+		AccumulatedTime -= FixedDeltaTime;
+	}
 
 	for (int i = 0; i < WheelPoints.Num(); i++)
 	{
@@ -83,16 +98,68 @@ void ASkateCore::Tick(float DeltaTime)
 		if (bWheelGround[i])
 		{
 			SuspensionForce(i, WheelPoints[i], ImpactInfo, DeltaTime);
-			SteerForce(i, WheelPoints[i]);
-			//DrawDebugLine(GetWorld(), Start, End , FColor::Blue, false, 1.0f, (uint8)0, 2.0f);
+			if(bDebug) DrawDebugLine(GetWorld(), Start, End , FColor::Blue, false, 1.0f, (uint8)0, 2.0f);
 		}
 		else
 		{
-			//DrawDebugLine(GetWorld(), Start, End , FColor::Red, false, 1.0f, (uint8)0, 2.0f);
+			if (bDebug) DrawDebugLine(GetWorld(), Start, End , FColor::Red, false, 1.0f, (uint8)0, 2.0f);
 		}
 	}
 
 
+}
+
+void ASkateCore::UpdateFixedDelta(float FixedDT)
+{
+
+	for (int i = 0; i < WheelPoints.Num(); i++)
+	{
+		//UE_LOG(LogTemp, Display, TEXT("Inside WheelsLogic FOR"));
+
+		FVector ComponentLocation = WheelPoints[i]->GetComponentLocation();
+		FVector Start = ComponentLocation + FVector(0.f, 0.f, 50.f);
+		FVector End = ComponentLocation - (WheelPoints[i]->GetUpVector() * (HoverDistance + WheelMeshOffset));
+
+		bWheelGround[i] = GetWorld()->LineTraceSingleByChannel(ImpactInfo, Start, End, ECollisionChannel::ECC_Visibility, Parameters);
+
+		if (bWheelGround[i])
+		{
+			SteerForce(i, WheelPoints[i]);
+			WheelForceInterp[i] = FVector(0.f, 0.f, 0.f);
+		}
+		else
+		{
+			bool bNeedforalign;
+			FHitResult ImpactforAlign;
+			FVector AlignCheckDir = Start - (FVector(0.f, 0.f, 1.f) * (HoverDistance + WheelMeshOffset));
+
+			bNeedforalign = GetWorld()->LineTraceSingleByChannel(ImpactforAlign, Start, AlignCheckDir, ECollisionChannel::ECC_Visibility, Parameters);
+			FVector Pullforce;
+
+			if (!bNeedforalign)
+			{
+				Pullforce = WheelPoints[i]->GetUpVector() * (this->Mass) * GetWorld()->GetGravityZ();
+				if (bDebug) DrawDebugLine(GetWorld(), Start, End, FColor::Blue, false, 1.0f, (uint8)0, 2.0f);
+			}
+			else
+			{
+				Pullforce = -WheelPoints[i]->GetUpVector() * (this->Mass) * GetWorld()->GetGravityZ();
+				if (bDebug) DrawDebugLine(GetWorld(), Start, End, FColor::Yellow, false, 1.0f, (uint8)0, 2.0f);
+			}
+
+			//UE_LOG(LogTemp, Display, TEXT("Not on bGround"));
+
+			FVector GravityForce = FVector(0.f, 0.f, (this->Mass) * GetWorld()->GetGravityZ());
+
+			FVector ForceToApply = (GravityForce + Pullforce)/2;
+
+			WheelForceInterp[i] = FMath::VInterpTo(WheelForceInterp[i], ForceToApply, FixedDT, 0.5f);
+
+			StaticMesh->AddForceAtLocation(WheelForceInterp[i], WheelPoints[i]->GetComponentLocation());
+		}
+
+
+	}
 }
 
 
@@ -123,7 +190,8 @@ void ASkateCore::SteerForce(int arrayPos, TObjectPtr<USceneComponent> Suspension
 
 
 	End = Start + tireWorldVel;
-	//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.f, (uint8)0, 2.0f);
+
+	if(bDebug) DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.f, (uint8)0, 2.0f);
 
 	//filter tireWorldVel
 
@@ -141,7 +209,7 @@ void ASkateCore::SteerForce(int arrayPos, TObjectPtr<USceneComponent> Suspension
 	float filterSvel = fabs(steeringVel);
 
 
-	tireGripFactor = 1;
+	tireGripFactor = 0.5f;
 	
 
 	float desiredVelChange = -steeringVel * tireGripFactor;
@@ -158,7 +226,7 @@ void ASkateCore::SteerForce(int arrayPos, TObjectPtr<USceneComponent> Suspension
 	FVector ForceStart = SuspensionComponent->GetComponentLocation() + FVector(0, 0, 50.f);
 	FVector ForceEnd = ForceStart + ForceToApply;
 
-	//DrawDebugLine(GetWorld(), ForceStart, ForceEnd, FColor::Cyan, false, 0.f, (uint8)0, 2.0f);
+	if (bDebug) DrawDebugLine(GetWorld(), ForceStart, ForceEnd, FColor::Cyan, false, 0.f, (uint8)0, 2.0f);
 }
 
 

@@ -21,9 +21,18 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+
+	//Floats for making a FixedUpdate logic.
+	float AccumulatedTime;
+
+	float FixedDeltaTime;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	// Fixed Update function
+	void UpdateFixedDelta(float FixedDT);
 
 
 
@@ -50,17 +59,28 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite)	USceneComponent* WheelPointBL;
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite)	USceneComponent* WheelPointBR;
 
+	//Mesh for Rider
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite) USkeletalMeshComponent* RiderMesh;
+
 
 
 #pragma endregion
 
 #pragma region Properties
 
+	//Arrays to help manipulate the Wheel points.
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") TArray<USceneComponent*> WheelPoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") TArray<float> PrevPosDelta;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") TArray<bool> bWheelGround;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") TArray<FVector> WheelForceInterp;
+
+
+	//Parameters for wheels.
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") float HoverDistance;
 
