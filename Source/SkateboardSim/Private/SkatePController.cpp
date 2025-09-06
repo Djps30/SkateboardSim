@@ -41,7 +41,6 @@ void ASkatePController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(IA_Impulse, ETriggerEvent::Triggered, this, &ASkatePController::InputImpulse);
 		EnhancedInputComponent->BindAction(IA_Impulse, ETriggerEvent::Completed, this, &ASkatePController::InputImpulse);
 
-
 		EnhancedInputComponent->BindAction(IA_Steer, ETriggerEvent::Triggered, this, &ASkatePController::InputSteer);
 		EnhancedInputComponent->BindAction(IA_Steer, ETriggerEvent::Completed, this, &ASkatePController::InputSteer);
 	}

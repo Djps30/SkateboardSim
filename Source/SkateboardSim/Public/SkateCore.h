@@ -96,6 +96,14 @@ public:
 
 	float Mass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkateCore")float Impulse_Input;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkateCore")float Steer_Input;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkateCore|Parameters")float MaxTurningAngle;
+
+	float WheelTurnSmoother;
+
 #pragma endregion
 
 
@@ -110,6 +118,13 @@ public:
 	void SetImpulse(float input);
 
 	void SetSteer(float input);
+
+
+	//Make the Skate lose speed naturaly.
+	void SpeedReduction();
+
+	void WheelsRotLogic();
+
 #pragma endregion
 
 

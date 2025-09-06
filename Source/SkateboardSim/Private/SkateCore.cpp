@@ -106,11 +106,13 @@ void ASkateCore::Tick(float DeltaTime)
 		}
 	}
 
-
 }
 
 void ASkateCore::UpdateFixedDelta(float FixedDT)
 {
+	SpeedReduction();
+
+	WheelsRotLogic();
 
 	for (int i = 0; i < WheelPoints.Num(); i++)
 	{
@@ -158,7 +160,6 @@ void ASkateCore::UpdateFixedDelta(float FixedDT)
 			StaticMesh->AddForceAtLocation(WheelForceInterp[i], WheelPoints[i]->GetComponentLocation());
 		}
 
-
 	}
 }
 
@@ -203,23 +204,14 @@ void ASkateCore::SteerForce(int arrayPos, TObjectPtr<USceneComponent> Suspension
 
 	float steeringVel = FVector::DotProduct(steeringDir, tireWorldVel);
 
-
-	float tireGripFactor;
-
-	float filterSvel = fabs(steeringVel);
-
-
-	tireGripFactor = 0.5f;
+	float tireGripFactor = 0.5f;
 	
-
 	float desiredVelChange = -steeringVel * tireGripFactor;
 
 	float desiredAccel = desiredVelChange / GetWorld()->DeltaTimeSeconds;
 
 
 	FVector ForceToApply = steeringDir * desiredAccel * (this->Mass / 10);
-
-
 
 	StaticMesh->AddForceAtLocation(ForceToApply, SuspensionComponent->GetComponentLocation() + FVector(0, 0, 60.f));
 
@@ -229,14 +221,46 @@ void ASkateCore::SteerForce(int arrayPos, TObjectPtr<USceneComponent> Suspension
 	if (bDebug) DrawDebugLine(GetWorld(), ForceStart, ForceEnd, FColor::Cyan, false, 0.f, (uint8)0, 2.0f);
 }
 
+//Functions from PController
+#pragma region PControllerFunctions
 void ASkateCore::SetImpulse(float input)
 {
 	UE_LOG(LogTemp, Display, TEXT("IMPULSE %f"), input);
+	Impulse_Input = input;
 }
 
 void ASkateCore::SetSteer(float input)
 {
 	UE_LOG(LogTemp, Display, TEXT("STEER %f"), input);
+
+	Steer_Input = input;
+}
+
+#pragma endregion
+
+
+
+void ASkateCore::SpeedReduction()
+{
+	FVector bodyVelocity;
+	FVector Final;
+
+	bodyVelocity = StaticMesh->GetComponentVelocity();
+
+	Final = bodyVelocity * 0.99f;
+
+	StaticMesh->SetPhysicsLinearVelocity(Final, false, NAME_None);
+}
+
+void ASkateCore::WheelsRotLogic()
+{
+
+	float Angle = MaxTurningAngle * Steer_Input;
+
+	WheelTurnSmoother = FMath::FInterpTo(WheelTurnSmoother, Angle, FApp::GetFixedDeltaTime(), 5);
+
+	FrontalWheels->SetRelativeRotation(FRotator(0,Angle,0));
+	BackWheels->SetRelativeRotation(FRotator(0, Angle*-1, 0));
 }
 
 
