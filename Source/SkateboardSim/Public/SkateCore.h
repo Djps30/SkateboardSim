@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
+#include "Curves/CurveVector.h"
 #include "GameFramework/Pawn.h"
 #include "SkateCore.generated.h"
 
@@ -23,8 +25,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
 
@@ -61,12 +61,29 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") TArray<float> PrevPosDelta;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") TArray<bool> bWheelGround;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") float HoverDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") float WheelMeshOffset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") TObjectPtr<UCurveFloat> SpringCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wheels") float DampingCoeficient;
+
+	FHitResult ImpactInfo;
+
+	FCollisionQueryParams Parameters;
+
+	float Mass;
+
 #pragma endregion
 
 
 #pragma region Functions
 
+	void SuspensionForce(int arrayPos, TObjectPtr<USceneComponent> SuspensionComponent, FHitResult ImpInfo, float DTime);
 
+	void SteerForce(int arrayPos, TObjectPtr<USceneComponent> SuspensionComponent);
 
 #pragma endregion
 
