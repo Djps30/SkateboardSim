@@ -268,9 +268,9 @@ void ASkateCore::WheelsRotLogic()
 
 void ASkateCore::ImpulsionLogic()
 {
-	if (Impulse_Input > 0)
+	if (Impulse_Input != 0)
 	{
-		PushFunction(20.f);
+		PushFunction(Impulse_Input * 20.f);
 	}
 
 }
