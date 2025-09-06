@@ -43,8 +43,11 @@ void ASkatePController::SetupInputComponent()
 
 		EnhancedInputComponent->BindAction(IA_Steer, ETriggerEvent::Triggered, this, &ASkatePController::InputSteer);
 		EnhancedInputComponent->BindAction(IA_Steer, ETriggerEvent::Completed, this, &ASkatePController::InputSteer);
-	}
 
+		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Triggered, this, &ASkatePController::InputJump);
+		EnhancedInputComponent->BindAction(IA_Jump, ETriggerEvent::Completed, this, &ASkatePController::InputJump);
+	}
+	
 }
 
 void ASkatePController::InputImpulse(const FInputActionValue& fValue)
@@ -55,4 +58,9 @@ void ASkatePController::InputImpulse(const FInputActionValue& fValue)
 void ASkatePController::InputSteer(const FInputActionValue& fValue)
 {
 	SkateRef->SetSteer(fValue.Get<float>());
+}
+
+void ASkatePController::InputJump(const FInputActionValue& fValue)
+{
+	SkateRef->SetJump(fValue.Get<float>());
 }

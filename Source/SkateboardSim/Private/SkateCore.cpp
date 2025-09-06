@@ -116,6 +116,8 @@ void ASkateCore::UpdateFixedDelta(float FixedDT)
 
 	ImpulsionLogic();
 
+	JumpingLogic(FixedDT);
+
 	for (int i = 0; i < WheelPoints.Num(); i++)
 	{
 		//UE_LOG(LogTemp, Display, TEXT("Inside WheelsLogic FOR"));
@@ -240,6 +242,12 @@ void ASkateCore::SetSteer(float input)
 	Steer_Input = input;
 }
 
+void ASkateCore::SetJump(float input)
+{
+	UE_LOG(LogTemp, Display, TEXT("JUMP %f"), input);
+	Jump_Input = input;
+}
+
 #pragma endregion
 
 
@@ -275,9 +283,33 @@ void ASkateCore::ImpulsionLogic()
 
 }
 
+void ASkateCore::JumpingLogic(float DeltaT)
+{
+	if (Jump_Input > 0)
+	{
+		JumpingCharge =  FMath::Clamp(JumpingCharge+(DeltaT*10.f),0,70);
+		UE_LOG(LogTemp, Display, TEXT("JumpingCharge %f"), JumpingCharge);
+	}
+	else
+	{
+		if (JumpingCharge >= 50)
+		{
+			JumpFunction(10.f*JumpingCharge);
+		}
+		JumpingCharge = 0;
+	}
+}
+
+
+
 void ASkateCore::PushFunction(float power)
 {
 	StaticMesh->AddImpulse(StaticMesh->GetForwardVector() * power, NAME_None, true);
+}
+
+void ASkateCore::JumpFunction(float power)
+{
+	StaticMesh->AddImpulse(StaticMesh->GetUpVector() * power, NAME_None, true);
 }
 
 

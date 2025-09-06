@@ -34,6 +34,7 @@ protected:
 
 	void InputSteer(const FInputActionValue& fValue);
 
+	void InputJump(const FInputActionValue& fValue);
 
 
 #pragma endregion
@@ -51,4 +52,7 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	UInputAction* IA_Steer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UInputAction* IA_Jump;
 };
