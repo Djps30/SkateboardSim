@@ -105,6 +105,11 @@ public:
 
 	void SteerForce(int arrayPos, TObjectPtr<USceneComponent> SuspensionComponent);
 
+
+
+	void SetImpulse(float input);
+
+	void SetSteer(float input);
 #pragma endregion
 
 

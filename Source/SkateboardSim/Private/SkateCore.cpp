@@ -229,5 +229,15 @@ void ASkateCore::SteerForce(int arrayPos, TObjectPtr<USceneComponent> Suspension
 	if (bDebug) DrawDebugLine(GetWorld(), ForceStart, ForceEnd, FColor::Cyan, false, 0.f, (uint8)0, 2.0f);
 }
 
+void ASkateCore::SetImpulse(float input)
+{
+	UE_LOG(LogTemp, Display, TEXT("IMPULSE %f"), input);
+}
+
+void ASkateCore::SetSteer(float input)
+{
+	UE_LOG(LogTemp, Display, TEXT("STEER %f"), input);
+}
+
 
 
