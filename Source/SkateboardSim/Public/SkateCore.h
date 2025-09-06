@@ -125,6 +125,11 @@ public:
 
 	void WheelsRotLogic();
 
+	void ImpulsionLogic();
+
+	UFUNCTION(BlueprintCallable)
+	void PushFunction(float power);
+
 #pragma endregion
 
 

@@ -114,6 +114,8 @@ void ASkateCore::UpdateFixedDelta(float FixedDT)
 
 	WheelsRotLogic();
 
+	ImpulsionLogic();
+
 	for (int i = 0; i < WheelPoints.Num(); i++)
 	{
 		//UE_LOG(LogTemp, Display, TEXT("Inside WheelsLogic FOR"));
@@ -227,6 +229,8 @@ void ASkateCore::SetImpulse(float input)
 {
 	UE_LOG(LogTemp, Display, TEXT("IMPULSE %f"), input);
 	Impulse_Input = input;
+
+	
 }
 
 void ASkateCore::SetSteer(float input)
@@ -254,13 +258,26 @@ void ASkateCore::SpeedReduction()
 
 void ASkateCore::WheelsRotLogic()
 {
-
 	float Angle = MaxTurningAngle * Steer_Input;
 
 	WheelTurnSmoother = FMath::FInterpTo(WheelTurnSmoother, Angle, FApp::GetFixedDeltaTime(), 5);
 
 	FrontalWheels->SetRelativeRotation(FRotator(0,Angle,0));
 	BackWheels->SetRelativeRotation(FRotator(0, Angle*-1, 0));
+}
+
+void ASkateCore::ImpulsionLogic()
+{
+	if (Impulse_Input > 0)
+	{
+		PushFunction(20.f);
+	}
+
+}
+
+void ASkateCore::PushFunction(float power)
+{
+	StaticMesh->AddImpulse(StaticMesh->GetForwardVector() * power, NAME_None, true);
 }
 
 
