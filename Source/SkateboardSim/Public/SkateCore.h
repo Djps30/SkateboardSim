@@ -172,6 +172,8 @@ public:
 
 	bool CheckIfGround();
 
+	void CheckingForScore();
+
 #pragma endregion
 
 

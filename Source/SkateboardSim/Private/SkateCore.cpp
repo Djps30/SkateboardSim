@@ -193,6 +193,9 @@ void ASkateCore::UpdateFixedDelta(float FixedDT)
 		}
 
 	}
+
+
+	CheckingForScore();
 }
 
 
@@ -384,7 +387,7 @@ void ASkateCore::AirTurnLogic()
 {
 	if (!CheckIfGround())
 	{
-		AirTurnSmoother = FMath::FInterpTo(WheelTurnSmoother, Steer_Input * 0.1f, FApp::GetFixedDeltaTime(), 0.1f);
+		AirTurnSmoother = FMath::FInterpTo(WheelTurnSmoother, Steer_Input * 0.01f, FApp::GetFixedDeltaTime(), 0.1f);
 	}
 	else
 	{
@@ -405,6 +408,28 @@ bool ASkateCore::CheckIfGround()
 		}
 	}
 	return false;
+}
+
+void ASkateCore::CheckingForScore()
+{
+	if (CheckIfGround()) return;
+
+	FVector Start = this->GetActorLocation();
+	FVector End = Start + (FVector(0, 0, -1.f) * (HoverDistance * 40.f));
+
+	bool RaycastHit;
+
+	RaycastHit = GetWorld()->LineTraceSingleByChannel(ImpactInfo, Start, End, ECollisionChannel::ECC_Visibility, Parameters);
+
+	if (bDebug) DrawDebugLine(GetWorld(), Start, End, FColor::Black, false, 1.0f, (uint8)0, 2.0f);
+
+	if (RaycastHit)
+	{
+		if (ImpactInfo.GetActor()->ActorHasTag(FName("Score")))
+		{
+			UE_LOG(LogTemp, Display, TEXT("Score Actor found!") );
+		}
+	}
 }
 
 
