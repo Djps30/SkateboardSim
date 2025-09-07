@@ -108,6 +108,16 @@ public:
 	float JumpingCharge;
 
 
+
+	//Animation Booleans
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkateCore|AnimBool") bool bCrouching;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkateCore|AnimBool") bool bPushing;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkateCore|AnimBool") bool bJumping;
+
+
 #pragma endregion
 
 
@@ -140,6 +150,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void JumpFunction(float power);
+
+	void ClearJumpBool();
 
 #pragma endregion
 

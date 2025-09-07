@@ -10,6 +10,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/BodyInstance.h"
 
+#include "TimerManager.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "Engine/Engine.h"
 
 ASkateCore::ASkateCore()
 {
@@ -232,6 +236,8 @@ void ASkateCore::SetImpulse(float input)
 	UE_LOG(LogTemp, Display, TEXT("IMPULSE %f"), input);
 	Impulse_Input = input;
 
+	if (Impulse_Input > 0) bPushing = true;
+	else bPushing = false;
 	
 }
 
@@ -287,15 +293,17 @@ void ASkateCore::JumpingLogic(float DeltaT)
 {
 	if (Jump_Input > 0)
 	{
-		JumpingCharge =  FMath::Clamp(JumpingCharge+(DeltaT*10.f),0,70);
+		JumpingCharge =  FMath::Clamp(JumpingCharge+(DeltaT*10.f),0,50);
+		bCrouching = true;
 		UE_LOG(LogTemp, Display, TEXT("JumpingCharge %f"), JumpingCharge);
 	}
 	else
 	{
-		if (JumpingCharge >= 50)
+		if (JumpingCharge >= 20)
 		{
-			JumpFunction(10.f*JumpingCharge);
+			JumpFunction(20.f*JumpingCharge);
 		}
+		bCrouching = false;
 		JumpingCharge = 0;
 	}
 }
@@ -310,6 +318,18 @@ void ASkateCore::PushFunction(float power)
 void ASkateCore::JumpFunction(float power)
 {
 	StaticMesh->AddImpulse(StaticMesh->GetUpVector() * power, NAME_None, true);
+	bJumping = true;
+	FTimerHandle JumpBoolTimer;
+	FTimerManager& TimerManager = GetWorldTimerManager();
+
+	TimerManager.SetTimer(JumpBoolTimer, this, &ASkateCore::ClearJumpBool, 1.f, false);
+
+
+}
+
+void ASkateCore::ClearJumpBool()
+{
+	bJumping = false;
 }
 
 
