@@ -8,6 +8,11 @@
 #include "GameFramework/Pawn.h"
 #include "SkateCore.generated.h"
 
+
+class USpringArmComponent;
+class UCameraComponent;
+
+
 UCLASS()
 class SKATEBOARDSIM_API ASkateCore : public APawn
 {
@@ -63,6 +68,11 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite) USkeletalMeshComponent* RiderMesh;
 
+	//Camera
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")	USpringArmComponent* SpringArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")	UCameraComponent* Camera;
 
 
 #pragma endregion
@@ -104,6 +114,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkateCore|Parameters")float MaxTurningAngle;
 
 	float WheelTurnSmoother;
+
+	float AirTurnSmoother;
 
 	float JumpingCharge;
 
@@ -148,13 +160,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PushFunction(float power);
 
+	void TimedPush();
+
 	UFUNCTION(BlueprintCallable)
 	void JumpFunction(float power);
 
 	void ClearJumpBool();
 
+	void AirTurnLogic();
+
 #pragma endregion
 
 
-
+	FTimerHandle ImpulseBoolTimer;
 };

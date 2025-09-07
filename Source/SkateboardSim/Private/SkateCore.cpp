@@ -9,6 +9,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/BodyInstance.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 
 #include "TimerManager.h"
 #include "EnhancedInputComponent.h"
@@ -22,6 +24,25 @@ ASkateCore::ASkateCore()
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SkateBoard"));
 	StaticMesh->SetSimulatePhysics(true);
 	RootComponent = StaticMesh;
+
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(StaticMesh);
+	SpringArm->TargetArmLength = 500.0f;
+	SpringArm->bDoCollisionTest = false;
+	SpringArm->bEnableCameraRotationLag = true;
+	SpringArm->CameraRotationLagSpeed = 12.f;
+	SpringArm->bInheritRoll = false;
+	SpringArm->bEnableCameraLag = true;
+	SpringArm->CameraLagSpeed = 20.f;
+	SpringArm->CameraLagMaxDistance = 100.f;
+	SpringArm->SocketOffset = FVector(0, 0, 350.f);
+	SpringArm->SetRelativeLocation(FVector(-150.f, 0.f, 200.f));
+	SpringArm->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
+	SpringArm->bUsePawnControlRotation = false;
+
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera->SetRelativeRotation(FRotator(-25.f,0.f,0.f));
+	Camera->SetupAttachment(SpringArm);
 
 	RiderMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Rider"));
 	RiderMesh->SetupAttachment(StaticMesh);
@@ -84,6 +105,8 @@ void ASkateCore::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	AirTurnLogic();
+
 	AccumulatedTime += DeltaTime;
 	while (AccumulatedTime >= FixedDeltaTime)
 	{
@@ -121,6 +144,7 @@ void ASkateCore::UpdateFixedDelta(float FixedDT)
 	ImpulsionLogic();
 
 	JumpingLogic(FixedDT);
+
 
 	for (int i = 0; i < WheelPoints.Num(); i++)
 	{
@@ -212,7 +236,10 @@ void ASkateCore::SteerForce(int arrayPos, TObjectPtr<USceneComponent> Suspension
 
 	float steeringVel = FVector::DotProduct(steeringDir, tireWorldVel);
 
-	float tireGripFactor = 0.5f;
+	float tireGripFactor;
+
+	if (bCrouching) tireGripFactor = 0.05f;
+	else tireGripFactor = 0.5f;
 	
 	float desiredVelChange = -steeringVel * tireGripFactor;
 
@@ -235,10 +262,6 @@ void ASkateCore::SetImpulse(float input)
 {
 	UE_LOG(LogTemp, Display, TEXT("IMPULSE %f"), input);
 	Impulse_Input = input;
-
-	if (Impulse_Input > 0) bPushing = true;
-	else bPushing = false;
-	
 }
 
 void ASkateCore::SetSteer(float input)
@@ -265,7 +288,10 @@ void ASkateCore::SpeedReduction()
 
 	bodyVelocity = StaticMesh->GetComponentVelocity();
 
-	Final = bodyVelocity * 0.99f;
+	Final = bodyVelocity;
+
+	if(bCrouching) Final = bodyVelocity * 0.99f;
+
 
 	StaticMesh->SetPhysicsLinearVelocity(Final, false, NAME_None);
 }
@@ -282,9 +308,26 @@ void ASkateCore::WheelsRotLogic()
 
 void ASkateCore::ImpulsionLogic()
 {
+	
+	FTimerManager& TimerManager = GetWorldTimerManager();
 	if (Impulse_Input != 0)
 	{
-		PushFunction(Impulse_Input * 20.f);
+		//PushFunction(Impulse_Input * 20.f);
+		if (!bPushing)
+		{
+			TimerManager.SetTimer(ImpulseBoolTimer, this, &ASkateCore::TimedPush, 2.f, true, 1.f);
+			bPushing = true;
+		}
+		
+	}
+	else
+	{
+		if (bPushing)
+		{
+			TimerManager.ClearTimer(ImpulseBoolTimer);
+			bPushing = false;
+		}
+		
 	}
 
 }
@@ -293,15 +336,15 @@ void ASkateCore::JumpingLogic(float DeltaT)
 {
 	if (Jump_Input > 0)
 	{
-		JumpingCharge =  FMath::Clamp(JumpingCharge+(DeltaT*10.f),0,50);
+		JumpingCharge =  FMath::Clamp(JumpingCharge+(DeltaT*10.f),0,10);
 		bCrouching = true;
 		UE_LOG(LogTemp, Display, TEXT("JumpingCharge %f"), JumpingCharge);
 	}
 	else
 	{
-		if (JumpingCharge >= 20)
+		if (JumpingCharge >= 5)
 		{
-			JumpFunction(20.f*JumpingCharge);
+			JumpFunction(100.f*JumpingCharge);
 		}
 		bCrouching = false;
 		JumpingCharge = 0;
@@ -315,9 +358,14 @@ void ASkateCore::PushFunction(float power)
 	StaticMesh->AddImpulse(StaticMesh->GetForwardVector() * power, NAME_None, true);
 }
 
+void ASkateCore::TimedPush()
+{
+	PushFunction(Impulse_Input*500.f);
+}
+
 void ASkateCore::JumpFunction(float power)
 {
-	StaticMesh->AddImpulse(StaticMesh->GetUpVector() * power, NAME_None, true);
+	StaticMesh->AddImpulse(FVector(0.f,0.f,1.f) * power, NAME_None, true);
 	bJumping = true;
 	FTimerHandle JumpBoolTimer;
 	FTimerManager& TimerManager = GetWorldTimerManager();
@@ -330,6 +378,30 @@ void ASkateCore::JumpFunction(float power)
 void ASkateCore::ClearJumpBool()
 {
 	bJumping = false;
+}
+
+void ASkateCore::AirTurnLogic()
+{
+	bool isGround = false;
+	for (int i = 0; i < bWheelGround.Num(); i++)
+	{
+		if (bWheelGround[i])
+		{
+			isGround = true;
+			break;
+		}
+	}
+
+	if (!isGround)
+	{
+		AirTurnSmoother = FMath::FInterpTo(WheelTurnSmoother, Steer_Input * 1, FApp::GetFixedDeltaTime(), 0.1f);
+	}
+	else
+	{
+		AirTurnSmoother = 0;
+	}
+
+	this->AddActorWorldRotation(FRotator(0, AirTurnSmoother, 0));
 }
 
 
