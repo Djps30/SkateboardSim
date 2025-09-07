@@ -14,12 +14,13 @@ class SKATEBOARDSIM_API ASkatePState : public APlayerState
 {
 	GENERATED_BODY()
 
-	TArray<AActor*> ScoredActors;
+	
 
 
-
+public:
 	void ScoringActor(AActor* Actorhit);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TArray<AActor*> ScoredActors;
 
 	
 };

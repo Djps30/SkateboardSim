@@ -3,6 +3,7 @@
 
 #include "SkateCore.h"
 
+#include "SkatePState.h"
 #include "CollisionQueryParams.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -318,7 +319,7 @@ void ASkateCore::ImpulsionLogic()
 		//PushFunction(Impulse_Input * 20.f);
 		if (!bPushing)
 		{
-			TimerManager.SetTimer(ImpulseBoolTimer, this, &ASkateCore::TimedPush, 2.f, true, 1.f);
+			TimerManager.SetTimer(ImpulseBoolTimer, this, &ASkateCore::TimedPush, 2.2f, true, 1.f);
 			bPushing = true;
 		}
 		
@@ -387,7 +388,7 @@ void ASkateCore::AirTurnLogic()
 {
 	if (!CheckIfGround())
 	{
-		AirTurnSmoother = FMath::FInterpTo(WheelTurnSmoother, Steer_Input * 0.01f, FApp::GetFixedDeltaTime(), 0.1f);
+		AirTurnSmoother = Steer_Input * 1.f;
 	}
 	else
 	{
@@ -428,6 +429,8 @@ void ASkateCore::CheckingForScore()
 		if (ImpactInfo.GetActor()->ActorHasTag(FName("Score")))
 		{
 			UE_LOG(LogTemp, Display, TEXT("Score Actor found!") );
+
+			Cast<ASkatePState>(GetPlayerState())->ScoringActor(ImpactInfo.GetActor());
 		}
 	}
 }

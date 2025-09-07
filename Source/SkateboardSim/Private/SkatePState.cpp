@@ -3,3 +3,20 @@
 
 #include "SkatePState.h"
 
+void ASkatePState::ScoringActor(AActor* Actorhit)
+{
+	bool NoMatch = true;
+	for (int i = 0; i < ScoredActors.Num(); i++)
+	{
+		if (ScoredActors[i] == Actorhit)
+		{
+			NoMatch = false;
+			break;
+		}
+	}
+
+	if (NoMatch)
+		ScoredActors.Add(Actorhit);
+
+
+}
