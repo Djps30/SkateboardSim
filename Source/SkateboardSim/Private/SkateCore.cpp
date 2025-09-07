@@ -308,9 +308,9 @@ void ASkateCore::WheelsRotLogic()
 
 void ASkateCore::ImpulsionLogic()
 {
-	
 	FTimerManager& TimerManager = GetWorldTimerManager();
-	if (Impulse_Input != 0)
+
+	if (Impulse_Input != 0 && CheckIfGround())
 	{
 		//PushFunction(Impulse_Input * 20.f);
 		if (!bPushing)
@@ -382,19 +382,9 @@ void ASkateCore::ClearJumpBool()
 
 void ASkateCore::AirTurnLogic()
 {
-	bool isGround = false;
-	for (int i = 0; i < bWheelGround.Num(); i++)
+	if (!CheckIfGround())
 	{
-		if (bWheelGround[i])
-		{
-			isGround = true;
-			break;
-		}
-	}
-
-	if (!isGround)
-	{
-		AirTurnSmoother = FMath::FInterpTo(WheelTurnSmoother, Steer_Input * 1, FApp::GetFixedDeltaTime(), 0.1f);
+		AirTurnSmoother = FMath::FInterpTo(WheelTurnSmoother, Steer_Input * 0.1f, FApp::GetFixedDeltaTime(), 0.1f);
 	}
 	else
 	{
@@ -402,6 +392,19 @@ void ASkateCore::AirTurnLogic()
 	}
 
 	this->AddActorWorldRotation(FRotator(0, AirTurnSmoother, 0));
+}
+
+bool ASkateCore::CheckIfGround()
+{
+	for (int i = 0; i < bWheelGround.Num(); i++)
+	{
+		if (bWheelGround[i])
+		{
+			return true;
+			break;
+		}
+	}
+	return false;
 }
 
 

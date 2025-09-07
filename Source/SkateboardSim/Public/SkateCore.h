@@ -169,6 +169,9 @@ public:
 
 	void AirTurnLogic();
 
+
+	bool CheckIfGround();
+
 #pragma endregion
 
 
